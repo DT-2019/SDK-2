@@ -1,0 +1,57 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 28
+    defaultConfig {
+        applicationId "com.fifthera.demo"
+        minSdkVersion 26
+        targetSdkVersion 28
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])//, '*.aar'
+    implementation 'com.android.support:appcompat-v7:28.0.0'
+    implementation files('libs/commons-codec-1.6.jar')
+    implementation 'com.android.support.constraint:constraint-layout:1.1.3'
+    implementation(name: 'lib_webview-release-2.0.0.0', ext: 'aar')
+
+    //fastjson
+    implementation 'com.alibaba:fastjson:1.2.9'
+//支付 如果项目中接入过支付宝的支付功能，会有编译内容重复报错，把这个包注释掉即可
+    implementation 'com.alibaba.alipay:alipaySingle:20160825@jar'
+//【可选】仅供特殊合作伙伴使用
+    implementation 'com.ali.auth.sdk:alibabauth_accountlink:1.1.4@jar'
+//【可选】安全高级，如使用了发放红包、优惠券高级功能，则必须引入
+    implementation 'com.taobao.android:securitybodyaar3:5.1.25@aar'
+//登陆
+    implementation 'com.ali.auth.sdk:alibabauth_core:1.6.1.4@jar'
+    implementation 'com.ali.auth.sdk:alibabauth_ui:1.6.1.4@aar'
+    implementation 'com.ali.auth.sdk:alibabauth_ext:1.6.1.4@jar'
+//Mtop网关
+    implementation 'com.taobao.android:mtopsdk_allinone_open:1.3.1@jar'
+//安全基础  V5的安全图片
+    implementation 'com.taobao.android:securityguardaar3:5.4.94@aar'
+//applink
+    implementation 'com.alibaba.sdk.android:alibc_link_partner:1.1.0.6'
+//UT，项目中若接入过友盟，会出现编译内容重复报错，把utdid包注释掉即可
+    implementation 'com.taobao.android:utdid4all:1.1.5.3_proguard@jar'
+    implementation 'com.alibaba.mtl:app-monitor-sdk:2.6.4_for_bc@jar'
+//联盟SDK
+    implementation 'com.alimama.tunion.sdk:tuniontradesdk:0.3.2'
+//电商SDK
+    implementation 'com.alibaba.sdk.android:alibc_trade_common:3.1.1.219'
+    implementation 'com.alibaba.sdk.android:alibc_trade_biz:3.1.1.219'
+    implementation 'com.alibaba.sdk.android:alibc_trade_sdk:3.1.1.219'
+
+    implementation 'org.greenrobot:eventbus:3.1.1'
+}

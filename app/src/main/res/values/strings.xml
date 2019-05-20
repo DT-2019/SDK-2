@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">demo-2</string>
+    <item name="webviewload_monitor_cancel_point" type="id"/>
+</resources>
