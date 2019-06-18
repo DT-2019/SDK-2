@@ -1,11 +1,18 @@
 package com.fifthera.demo;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.webkit.WebView;
 import android.widget.Toast;
 
@@ -16,6 +23,9 @@ import com.fifthera.ecwebview.ErrorCode;
 import com.fifthera.ecwebview.HomePageInterceptListener;
 import com.fifthera.ecwebview.JSApi;
 import com.fifthera.ecwebview.OnApiResponseListener;
+import com.kepler.jd.Listener.OpenAppAction;
+import com.kepler.jd.login.KeplerApiManager;
+import com.kepler.jd.sdk.bean.KeplerAttachParameter;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -28,6 +38,8 @@ import static com.fifthera.ecwebview.BitmapShareType.TYPE_WECHAT;
 import static com.fifthera.ecwebview.BitmapShareType.TYPE_WECHAT_MOMENT;
 
 public class ECWebviewActivity extends AppCompatActivity {
+    private KeplerAttachParameter mKeplerAttachParameter = new KeplerAttachParameter();
+    private Handler mHandler = new Handler();
     private ECWebView mWebView;
     private JSApi mApi;
     private Context mContext;
@@ -95,9 +107,15 @@ public class ECWebviewActivity extends AppCompatActivity {
             }
 
             @Override
-            public void authoResult(JSONObject result) {
-
+            public void calendarCallback() {
+                requestPermission();
             }
+
+            @Override
+            public void jdShoppingCallback(String s) {
+                openJdUrl(s);
+            }
+
         });
 
         mWebView.shouldInterceptHomePageUrl(new HomePageInterceptListener() {
@@ -118,6 +136,68 @@ public class ECWebviewActivity extends AppCompatActivity {
 
         mWebView.loadUrl(webUrl);
     }
+
+    public void requestPermission() {
+        String permissions[] = new String[]{
+                Manifest.permission.WRITE_CALENDAR,
+                Manifest.permission.READ_CALENDAR};
+
+        if (Build.VERSION.SDK_INT >= 23) {
+            boolean needRequest = false;
+            for (int i = 0; i < permissions.length; i++) {
+                int chechpermission = ContextCompat.checkSelfPermission(getApplicationContext(), permissions[i]);
+                if (chechpermission != PackageManager.PERMISSION_GRANTED) {
+                    needRequest = true;
+                }
+            }
+            if (needRequest) {
+                ActivityCompat.requestPermissions(ECWebviewActivity.this, permissions, 1);
+            }
+        }
+    }
+    private void openJdUrl(String url) {
+        OpenAppAction mOpenAppAction = new OpenAppAction() {
+            @Override
+            public void onStatus(final int status, final String url) {
+                mHandler.post(
+                        new Runnable() {
+                            @Override
+                            public void run() {
+                                if (status == OpenAppAction.OpenAppAction_start) {
+                                    //开始状态未必一定执行，
+                                    Log.d("lzh", "OpenAppAction start");
+                                } else {
+                                    //  mKelperTask = null;
+                                    //  dialogDiss();
+                                    Log.d("lzh", "mKelperTask = null");
+                                }
+                                if (status == OpenAppAction.OpenAppAction_result_NoJDAPP) {
+                                    //未安装京东
+                                    Log.d("lzh","OpenAppAction_result_NoJDAPP");
+
+                                    mWebView.loadUrl(url);
+
+
+                                } else if (status == OpenAppAction.OpenAppAction_result_BlackUrl) {
+                                    //不在白名单
+                                    Log.d("lzh","OpenAppAction_result_BlackUrl");
+                                } else if (status == OpenAppAction.OpenAppAction_result_ErrorScheme) {
+                                    //协议错误
+                                    Log.d("lzh","OpenAppAction_result_ErrorScheme");
+                                } else if (status == OpenAppAction.OpenAppAction_result_APP) {
+                                    //呼京东成功
+                                    Log.d("lzh","OpenAppAction_result_APP");
+                                } else if (status == OpenAppAction.OpenAppAction_result_NetError) {
+                                    Log.d("lzh","OpenAppAction_result_NetError");
+                                    //网络异常
+                                }
+                            }
+                        });
+            }
+        };
+        KeplerApiManager.getWebViewService().openAppWebViewPage(this, url, mKeplerAttachParameter, mOpenAppAction);
+    }
+
 
     //通过eventbus方式进行消息传递
     @Subscribe(threadMode = ThreadMode.MAIN)

@@ -1,0 +1,4 @@
+int raw safe 0x7f130001
+int string Illegal_info 0x7f140001
+int string app_name 0x7f140002
+int string kepler_check_net 0x7f140003

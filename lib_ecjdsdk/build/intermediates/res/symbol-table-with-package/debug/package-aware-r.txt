@@ -1,0 +1,5 @@
+com.jd.jdsdk
+raw safe
+string Illegal_info
+string app_name
+string kepler_check_net

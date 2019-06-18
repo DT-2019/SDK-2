@@ -19,6 +19,8 @@ import com.fifthera.ecwebview.ErrorCode;
 import com.fifthera.ecwebview.HomePageInterceptListener;
 import com.fifthera.ecwebview.JSApi;
 import com.fifthera.ecwebview.OnApiResponseListener;
+import com.kepler.jd.Listener.AsyncInitListener;
+import com.kepler.jd.login.KeplerApiManager;
 
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -37,13 +39,14 @@ public class MainActivity extends AppCompatActivity {
     private ECWebView mWebView;
     private JSApi mApi;
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         //百川初始化
         initAlibc();
+        //京东初始化
+        initJD();
         mContext = this;
         mWebView = findViewById(R.id.ec_webview);
         mApi = new JSApi(this);
@@ -88,8 +91,13 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
-            public void authoResult(JSONObject result) {
-                //此方法可不必实现
+            public void calendarCallback() {
+                //显示秒杀需要添加日历事件
+            }
+
+            @Override
+            public void jdShoppingCallback(String s) {
+                //京东购物回调
             }
         });
 
@@ -155,6 +163,29 @@ public class MainActivity extends AppCompatActivity {
                 Log.d(TAG, "asyncInit onFailure: i:" + i + "   s:" + s);
             }
         });
+    }
+
+    //京东初始化，请放在application中进行
+    private void initJD() {
+        //appKey, keySecret在京东申请通过后生成
+        String appKey = "xxxxxxxxxxxx";
+        String keySecret = "xxxxxxxxxxxxx";
+
+        KeplerApiManager.asyncInitSdk(this.getApplication(), appKey, keySecret,
+                new AsyncInitListener() {
+                    @Override
+                    public void onSuccess() {
+                        // TODO Auto-generated method stub
+                        Log.e("Kepler", "Kepler asyncInitSdk onSuccess ");
+                    }
+
+                    @Override
+                    public void onFailure() {
+                        // TODO Auto-generated method stub
+                        Log.e("Kepler",
+                                "Kepler asyncInitSdk 授权失败，请检查lib 工程资源引用；包名,签名证书是否和注册一致");
+                    }
+                });
     }
 
     //阿里百川授权结果返回回调
