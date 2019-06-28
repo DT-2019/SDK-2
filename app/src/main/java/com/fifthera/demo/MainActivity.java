@@ -1,15 +1,22 @@
 package com.fifthera.demo;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.os.Build;
+import android.os.Handler;
 import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.webkit.WebView;
 import android.widget.Toast;
 
+import com.ali.auth.third.core.util.StringUtil;
 import com.ali.auth.third.ui.context.CallbackContext;
 import com.alibaba.baichuan.android.trade.AlibcTradeSDK;
 import com.alibaba.baichuan.android.trade.callback.AlibcTradeInitCallback;
@@ -20,13 +27,18 @@ import com.fifthera.ecwebview.HomePageInterceptListener;
 import com.fifthera.ecwebview.JSApi;
 import com.fifthera.ecwebview.OnApiResponseListener;
 import com.kepler.jd.Listener.AsyncInitListener;
+import com.kepler.jd.Listener.OpenAppAction;
 import com.kepler.jd.login.KeplerApiManager;
+import com.kepler.jd.sdk.bean.KeplerAttachParameter;
 
 import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.codec.binary.StringUtils;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.json.JSONObject;
 
 public class MainActivity extends AppCompatActivity {
+    private KeplerAttachParameter mKeplerAttachParameter = new KeplerAttachParameter();
+    private Handler mHandler = new Handler();
     //淘宝 授权 测试环境-true，正式环境-false
     public static boolean isDebug = true;
     //流量主-平台申请的clientId
@@ -93,11 +105,15 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void calendarCallback() {
                 //显示秒杀需要添加日历事件
+                requestPermission();
             }
 
             @Override
             public void jdShoppingCallback(String s) {
                 //京东购物回调
+                if (s != null && !s.equals("")) {
+                    openJdUrl(s);
+                }
             }
         });
 
@@ -150,6 +166,25 @@ public class MainActivity extends AppCompatActivity {
         return s.toUpperCase();
     }
 
+    public void requestPermission() {
+        String permissions[] = new String[]{
+                Manifest.permission.WRITE_CALENDAR,
+                Manifest.permission.READ_CALENDAR};
+
+        if (Build.VERSION.SDK_INT >= 23) {
+            boolean needRequest = false;
+            for (int i = 0; i < permissions.length; i++) {
+                int chechpermission = ContextCompat.checkSelfPermission(getApplicationContext(), permissions[i]);
+                if (chechpermission != PackageManager.PERMISSION_GRANTED) {
+                    needRequest = true;
+                }
+            }
+            if (needRequest) {
+                ActivityCompat.requestPermissions(MainActivity.this, permissions, 1);
+            }
+        }
+    }
+
     //百川授权，最好放在application中进行
     private void initAlibc() {
         AlibcTradeSDK.asyncInit(this.getApplication(), new AlibcTradeInitCallback() {
@@ -186,6 +221,39 @@ public class MainActivity extends AppCompatActivity {
                                 "Kepler asyncInitSdk 授权失败，请检查lib 工程资源引用；包名,签名证书是否和注册一致");
                     }
                 });
+    }
+
+    private void openJdUrl(String url) {
+        OpenAppAction mOpenAppAction = new OpenAppAction() {
+            @Override
+            public void onStatus(final int status, final String url) {
+                mHandler.post(
+                        new Runnable() {
+                            @Override
+                            public void run() {
+                                if (status == OpenAppAction.OpenAppAction_start) {
+                                    //开始状态未必一定执行，
+                                } else {
+                                    //  mKelperTask = null;
+                                    //  dialogDiss();
+                                }
+                                if (status == OpenAppAction.OpenAppAction_result_NoJDAPP) {
+                                    //未安装京东
+                                    mWebView.loadUrl(url);
+                                } else if (status == OpenAppAction.OpenAppAction_result_BlackUrl) {
+                                    //不在白名单
+                                } else if (status == OpenAppAction.OpenAppAction_result_ErrorScheme) {
+                                    //协议错误
+                                } else if (status == OpenAppAction.OpenAppAction_result_APP) {
+                                    //呼京东成功
+                                } else if (status == OpenAppAction.OpenAppAction_result_NetError) {
+                                    //网络异常
+                                }
+                            }
+                        });
+            }
+        };
+        KeplerApiManager.getWebViewService().openAppWebViewPage(this, url, mKeplerAttachParameter, mOpenAppAction);
     }
 
     //阿里百川授权结果返回回调
